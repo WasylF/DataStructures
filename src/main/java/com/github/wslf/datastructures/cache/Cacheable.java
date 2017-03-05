@@ -207,4 +207,12 @@ public abstract class Cacheable<CachedT, KeyT> {
         return cacheMap.keySet();
     }
 
+    public long getCreationTime(KeyT key) {
+        if (!contains(key)) {
+            return 0;
+        }
+
+        CachedItem<CachedT, KeyT> cachedItem = cacheMap.get(key);
+        return cachedItem.getCreationTime();
+    }
 }

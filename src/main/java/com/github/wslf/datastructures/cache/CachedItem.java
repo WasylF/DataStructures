@@ -84,4 +84,8 @@ class CachedItem<CachedT, KeyT> implements Comparable<CachedItem<CachedT, KeyT>>
     public long getAccessNumber() {
         return this.accessNumber;
     }
+
+    public long getCreationTime() {
+        return createTime;
+    }
 }
