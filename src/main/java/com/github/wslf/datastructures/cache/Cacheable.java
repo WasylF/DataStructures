@@ -2,12 +2,12 @@ package com.github.wslf.datastructures.cache;
 
 import java.util.HashMap;
 import java.util.Map;
-import com.github.wslf.datastructures.set.TreeSetWslF;
+import com.github.wslf.datastructures.set.TreeSetExtended;
 import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Stores data at the cache and updates some of them.
+ * Stores data at the cache and updates most often used.
  *
  * @author Wsl_F
  * @param <CachedT> type of cached data
@@ -47,7 +47,7 @@ public abstract class Cacheable<CachedT, KeyT> {
         this.TIME_TO_UPDATE_MS = TIME_TO_UPDATE_MS;
     }
 
-    private final TreeSetWslF<CachedItem<CachedT, KeyT>> cacheSet = new TreeSetWslF<>();
+    private final TreeSetExtended<CachedItem<CachedT, KeyT>> cacheSet = new TreeSetExtended<>();
 
     private final Map<KeyT, CachedItem<CachedT, KeyT>> cacheMap = new HashMap<>();
 
@@ -108,7 +108,7 @@ public abstract class Cacheable<CachedT, KeyT> {
 
     private void addToCacheIfNeed(KeyT key, CachedT value) {
         if (!contains(key)) {
-            boolean add = false;
+            boolean add;
             CachedItem<CachedT, KeyT> newItem = new CachedItem<>(key, value);
             add = (cacheMap.size() < MAX_CACHED_DATA)
                     || (cacheSet.size() == MAX_CACHED_DATA
@@ -141,7 +141,7 @@ public abstract class Cacheable<CachedT, KeyT> {
     /**
      * remove item with specified key from the cache
      *
-     * @param key
+     * @param key key of item to be removed
      */
     public void remove(KeyT key) {
         CachedItem<CachedT, KeyT> item = cacheMap.remove(key);
@@ -168,7 +168,7 @@ public abstract class Cacheable<CachedT, KeyT> {
         decreaseUsing();
 
         long curTime = System.currentTimeMillis();
-        for (CachedItem<CachedT, KeyT> item : cacheSet.getFirstN(MAX_UPDATED_DATA)) {
+        for (CachedItem<CachedT, KeyT> item : cacheSet.getFirstK(MAX_UPDATED_DATA)) {
             if (item.timeSinceCreated(curTime) > TIME_TO_UPDATE_MS) {
                 update(item);
             }
@@ -200,14 +200,22 @@ public abstract class Cacheable<CachedT, KeyT> {
     }
 
     /**
-     *
+     * Returns set of keys of all cached items.
+     * 
      * @return set, that contains all cached keys.
      */
     public Set<KeyT> getCachedKeys() {
         return cacheMap.keySet();
     }
 
-    public long getCreationTime(KeyT key) {
+    /**
+     * Returns time of last update item with specified key to the cache.
+     * <br> if cache doesn't contain such item, returns {@code 0}
+     *
+     * @param key key of item
+     * @return time of last adding item with specified {@code key} to the cache.
+     */
+    public long getUpdateTime(KeyT key) {
         if (!contains(key)) {
             return 0;
         }

@@ -42,17 +42,20 @@ class CachedItem<CachedT, KeyT> implements Comparable<CachedItem<CachedT, KeyT>>
         this.accessNumber = accessNumber;
     }
 
+    public CachedItem(KeyT key, CachedT value, long creationTime) {
+        this.key = key;
+        this.value = value;
+        this.createTime = creationTime;
+        this.accessTime = this.createTime;
+        this.accessNumber = 1;
+    }
+
     public CachedItem(KeyT key, CachedT value) {
         this.key = key;
         this.value = value;
         this.createTime = System.currentTimeMillis();
         this.accessTime = this.createTime;
         this.accessNumber = 1;
-    }
-
-    public CachedItem(KeyT key, CachedT value, long accessNumber) {
-        this(key, value);
-        this.accessNumber = accessNumber;
     }
 
     public void use() {

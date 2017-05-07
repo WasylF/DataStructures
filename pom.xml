@@ -3,7 +3,10 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.wslf</groupId>
     <artifactId>DataStructures</artifactId>
-    <version>0.3</version>
+    <version>1.0.0</version>
+    <scm>
+        <connection>scm:git:https://github.com/WslF/DataStructures.git</connection>
+    </scm>
     <packaging>jar</packaging>
     <dependencies>
         <dependency>
