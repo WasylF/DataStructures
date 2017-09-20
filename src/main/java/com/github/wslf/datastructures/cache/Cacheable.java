@@ -154,7 +154,7 @@ public abstract class Cacheable<CachedT, KeyT> {
         CachedT newValue = getValueManually(key);
 
         CachedItem<CachedT, KeyT> currentItem = cacheMap.get(key);
-        CachedItem<CachedT, KeyT> newItem = new CachedItem<>(key, newValue, currentItem.getAccessNumber());
+        CachedItem<CachedT, KeyT> newItem = new CachedItem<>(key, newValue, currentItem.getAccessTime());
 
         synchronized (this) {
             remove(key);
