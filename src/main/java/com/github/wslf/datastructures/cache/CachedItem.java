@@ -95,4 +95,8 @@ class CachedItem<CachedT, KeyT> implements Comparable<CachedItem<CachedT, KeyT>>
     public long getAccessTime() {
         return accessTime;
     }
+
+    public boolean needUpdate(long curTime, long timeToUpdate) {
+        return timeSinceCreated(curTime) > timeToUpdate;
+    }
 }

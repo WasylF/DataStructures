@@ -1,10 +1,10 @@
 package com.github.wslf.datastructures.cache;
 
-import java.util.HashMap;
-import java.util.Map;
 import com.github.wslf.datastructures.set.TreeSetExtended;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Stores data at the cache and updates most often used.
@@ -42,14 +42,15 @@ public abstract class Cacheable<CachedT, KeyT> {
      * {@code MAX_UPDATED_DATE} used items is updated.
      */
     public Cacheable(int MAX_CACHED_DATA, int MAX_UPDATED_DATA, long TIME_TO_UPDATE_MS) {
+        this.updating = new HashSet<>();
         this.MAX_CACHED_DATA = MAX_CACHED_DATA;
         this.MAX_UPDATED_DATA = MAX_UPDATED_DATA;
         this.TIME_TO_UPDATE_MS = TIME_TO_UPDATE_MS;
     }
 
-    private final TreeSetExtended<CachedItem<CachedT, KeyT>> cacheSet = new TreeSetExtended<>();
+    private volatile TreeSetExtended<CachedItem<CachedT, KeyT>> cacheSet = new TreeSetExtended<>();
 
-    private final Map<KeyT, CachedItem<CachedT, KeyT>> cacheMap = new HashMap<>();
+    private volatile ConcurrentMap<KeyT, CachedItem<CachedT, KeyT>> cacheMap = new ConcurrentHashMap<>();
 
     /**
      * getting value by long time calculation or so on
@@ -169,39 +170,33 @@ public abstract class Cacheable<CachedT, KeyT> {
 
         long curTime = System.currentTimeMillis();
         for (CachedItem<CachedT, KeyT> item : cacheSet.getFirstK(MAX_UPDATED_DATA)) {
-            if (item.timeSinceCreated(curTime) > TIME_TO_UPDATE_MS) {
+            if (item.needUpdate(curTime, TIME_TO_UPDATE_MS)) {
                 update(item);
             }
         }
     }
-
     /**
      * contains keys of items that updating now in separate thread
      */
-    private final Set<KeyT> updating = new HashSet<>();
+    private volatile Set<KeyT> updating;
 
     /**
      * updating cached value of item in separate thread
      *
      * @param item
      */
-    private void update(CachedItem<CachedT, KeyT> item) {
-        boolean update = false;
-        synchronized (updating) {
-            if (!updating.contains(item.getKey())) {
+    private synchronized void update(CachedItem<CachedT, KeyT> item) {
+        if (!updating.contains(item.getKey())) {
+            if (item.needUpdate(System.currentTimeMillis(), TIME_TO_UPDATE_MS)) {
                 updating.add(item.getKey());
-                update = true;
+                new Thread(new CalculatingManually<>(this, item.getKey())).start();
             }
-        }
-
-        if (update) {
-            new Thread(new CalculatingManually<>(this, item.getKey())).start();
         }
     }
 
     /**
      * Returns set of keys of all cached items.
-     * 
+     *
      * @return set, that contains all cached keys.
      */
     public Set<KeyT> getCachedKeys() {
